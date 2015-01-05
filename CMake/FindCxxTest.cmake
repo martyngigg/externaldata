@@ -136,9 +136,6 @@ macro(CXXTEST_ADD_TEST _cxxtest_testname)
     # The TESTHELPER_SRCS variable can be set outside the macro and used to pass in test helper classes
     add_executable(${_cxxtest_testname} EXCLUDE_FROM_ALL ${_cxxtest_cpp_files} ${_cxxtest_h_files} ${TESTHELPER_SRCS} )
 
-    # only the package wide test is added to check
-    add_dependencies(check ${_cxxtest_testname})
-
     if (CXXTEST_SINGLE_LOGFILE)
       # add the whole suite as a single test so the output xml doesn't overwrite itself
       add_test ( NAME ${_cxxtest_testname}
