@@ -1,23 +1,19 @@
 # A few tests to checkout out the ExternalData module
 
-#include_directories(SYSTEM ${CXXTEST_INCLUDE_DIR})
+include_directories(SYSTEM ${CXXTEST_INCLUDE_DIR})
 
-#set(test_files
-#  ExampleUnitTestNoData.h
-#  ExampleUnitTestWithData.h
-#)
+set(test_files
+  ExampleUnitTestNoData.h
+  ExampleUnitTestWithData.h
+)
 
-#set(test_data_files
-#  
-#)
+cxxtest_add_test(foobar_test ${test_files})
+# Hack so that the test can find file using just a filename
+# Full solution will use file finder and properties file
+set_target_properties(foobar_test PROPERTIES
+                      COMPILE_DEFINITIONS 
+                        "TEST_DATA_DIR=\"${PROJECT_BINARY_DIR}/ExternalData/Testing/Data\"")
 
-#set_target_properties(foobar_test PROPERTIES
-#                      COMPILE_DEFINITIONS 
-#                        "TEST_DATA_DIR=\"${ExternalData_OBJECT_STORES}\"")
-
-# Basic command to test the file linking has done what is expected
-ExternalData_Add_Test(TestingData
-  NAME foobar_test
-  COMMAND ${CMAKE_COMMAND} -E md5sum DATA{${EXTERNALDATATEST_SOURCE_DIR}/Testing/Data/BSS_11841_event.nxs}
-  )
+# Make sure the files are downloaded if required
+add_dependencies(foobar_test TestingData)
 
