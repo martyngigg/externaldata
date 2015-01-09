@@ -10,10 +10,10 @@ accessible in a remote location defined in CMake
 ### Test Scenarios:
 I have no idea how to unit test bash scripts so I'm making a note of the things that need testing.
 
-1. adding a single file that does not exist;
-2. adding multiple files that do not exist;
-3. adding a single file that already exists;
-4. adding multiple files where one of them already exists;
-5. adding multiple files where some of them already exist;
-5. adding multiple files where all of them already exist;
-
+* adding a single file that does not exist;
+* adding multiple files that do not exist;
+* adding a single file that already exists in git;
+* adding multiple files where one of them already exists in git;
+* adding multiple files where some of them already exist in git;
+* adding multiple files where all of them already exist in git;
+* adding a single file where the content link is untracked
