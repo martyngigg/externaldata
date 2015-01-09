@@ -2,22 +2,19 @@
 #===============================================================================
 # Adds a content link to a test data file that will be referenced using CMake's
 # ExternalData mechanism
+# Debug mode can be requested by setting GIT_ADD_TEST_DATA_DEBUG=1
 #===============================================================================
 USAGE="<file1> [<file2> <file3> ...]"
 OPTIONS_SPEC=
 SUBDIRECTORY_OK=Yes
 . "$(git --exec-path)/git-sh-setup"
 
-# Prefix for renamed content files
-CONTENT_RENAME_PREFIX="EXTERNALDATA_"
 # Hashing algorithm
 HASH_ALG="MD5"
 # Extension for content link files
 CONTENT_LINK_EXTENSION=".md5"
 # Output indentation
 INDENT="    "
-# Upload server
-PUSH_SERVER_URL_PREFIX="http://fileserver.org/TestingData/$HASH_ALG"
 
 # 
 # Adds a content link for a single
@@ -25,35 +22,28 @@ PUSH_SERVER_URL_PREFIX="http://fileserver.org/TestingData/$HASH_ALG"
 #
 add_test_data() {
   content_file=$1
-  echo "Adding new data file '$content_file'"
+  if [ ! -f $content_file ]; then
+    fatal "Cannot find file '$content_file'"
+  fi
+  debug_msg "Adding data file '$content_file'"
   
+  # Compute hash
   hash=$(hash_code $content_file)
-  echo "${INDENT}${HASH_ALG} hash: $hash"
-  if [ $? -gt 0 ]; then
-    echo $hash
-    exit 1
-  fi
+  debug_msg "${INDENT}${HASH_ALG} hash: $hash"
   
+  # Create content link if required
   content_link_filename=$(content_link_filename $content_file)
-  if [ -f $content_link_filename ]; then
-   echo "${INDENT}${content_file} already referenced as ${content_link_filename}"
-   echo "${INDENT}Nothing added."
-   return 0
-  fi
+  msgs=$(create_or_check_content_link $content_link_filename $content_file $hash)
+  debug_msg $msgs
+
+  git_add $content_link_filename
+  debug_msg "${INDENT}$content_link_filename staged for commit"
 
   renamed_file=$(rename_content $content_file $hash)
-  echo -e "${INDENT}Content location: ${renamed_file}"
-
-  content_link=$(create_content_link $content_link_filename $hash)
-  echo -e "${INDENT}Content link: ${content_link}"
+  debug_msg "${INDENT}Content location: ${renamed_file}"
   
-  git_add $content_link
-  echo -e "${INDENT}$content_link staged for commit"
-  
-  echo
-  echo "${INDENT}Please upload ${renamed_file} to ${PUSH_SERVER_URL_PREFIX}/$hash"
-
-  echo
+  # For capture by caller
+  echo ${renamed_file}
 }
 
 # 
@@ -83,7 +73,7 @@ md5sum() {
 }
 
 # 
-# Rename a file to the hashed variant: ${CONTENT_RENAME_PREFIX}${original_filename}.$hash_code
+# Rename a file to the hashed variant: $hash_code
 # Path to the new full path is printed to stdout
 #   @param $1 - Path to the original file
 #   @param $2 - Hash code of the file content
@@ -91,7 +81,7 @@ rename_content() {
   directory_name=$(dirname $1)
   original_filename=$(basename $1)
   hash_code=$2
-  hashed_filename=${CONTENT_RENAME_PREFIX}${original_filename}.$hash_code
+  hashed_filename=$hash_code
   full_path=$directory_name/$hashed_filename
   # Rename the file
   mv $1 $full_path
@@ -101,15 +91,45 @@ rename_content() {
 
 # 
 # Create a text file containing the hash of the content named filename.ext.hash
+# if one does not already exist. If a file exists then verify that the checksum
+# is correct
 # Path to the new full path is printed to stdout
+#   @param $1 - New content link filename
+#   @param $2 - Real content filename
+#   @param $3 - Hash code of the file content
+#   @return 0 indicates content link was created/updated. 10 indicates file existed and was not updated.
+create_or_check_content_link() {
+  content_link_filename=$1
+  content_file=$2
+  hash=$3
+
+  # The content link file may already exist. If it does not then it is created.
+  # If the file exists then either:
+  #   - the hash in the file matches the raw content: nothing is changed. 
+  #   - the hash in the file is different to the raw content: it is assume the content will be updated
+  verb="created"
+  if [ -f $content_link_filename ]; then
+    hash_in_file=$(cat $content_link_filename)
+    if [ "$hash_in_file" = "$hash" ]; then
+      echo "${INDENT}${content_file} already referenced as ${content_link_filename}"
+      return 10
+    fi
+    verb="updated"
+  fi
+
+  create_content_link $content_link_filename $hash
+  echo "${INDENT}Content link ${verb}: ${content_link_filename}"
+  return 0
+}
+
+# 
+# Create a text file containing the hash of the content named filename.ext.hash
 #   @param $1 - New content link filename
 #   @param $2 - Hash code of the file content
 create_content_link() {
   content_link_filename=$1
   # Create file
   echo $2 > ${content_link_filename}
-  # Echo filename to caller
-  echo ${content_link_filename}
 }
 
 #
@@ -127,6 +147,28 @@ git_add() {
   git add $1
 }
 
+#
+# If in debug mode then sends all arguments to echo
+debug_msg() {
+  if [ "$MANTID_GIT_DEBUG" = "1" ]; then 
+    echo "$@"
+  fi
+}
+
+#
+# Send a message to stdout
+information_msg() {
+  echo "$@"
+}
+
+#
+# Sends a fatal error message to stderr and aborts the script
+#   @param $1 Message
+fatal() {
+  echo "$@" 1>&2
+  exit 1
+}
+
 #-------------------------------------------------------------------------------
 
 # Check arguments
@@ -135,7 +177,13 @@ if [ $# = 0 ]; then
 fi
 
 datafiles=$*
+all_hashed_files=""
 for datafile in $datafiles; do
-  add_test_data $datafile
+  hashed_content=$(add_test_data $datafile)
+  all_hashed_files="$all_hashed_files $hashed_content"
 done
 
+information_msg "Please upload the following files to the file server under the $HASH_ALG directory:"
+for file in $all_hashed_files; do
+  information_msg "${INDENT}$file"
+done
