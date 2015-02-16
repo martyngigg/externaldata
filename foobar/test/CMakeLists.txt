@@ -8,6 +8,12 @@ set(test_files
 )
 
 cxxtest_add_test(foobar_test ${test_files})
+# Hack so that the test can find file using just a filename
+# Full solution will use file finder and properties file
 set_target_properties(foobar_test PROPERTIES
                       COMPILE_DEFINITIONS 
-                        "TEST_DATA_DIR=\"${PROJECT_SOURCE_DIR}/Testing/Data\"")
+                        "TEST_DATA_DIR=\"${PROJECT_BINARY_DIR}/ExternalData/Testing/Data\"")
+
+# Make sure the files are downloaded if required
+add_dependencies(foobar_test TestingData)
+

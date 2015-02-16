@@ -139,7 +139,7 @@ macro(CXXTEST_ADD_TEST _cxxtest_testname)
     if (CXXTEST_SINGLE_LOGFILE)
       # add the whole suite as a single test so the output xml doesn't overwrite itself
       add_test ( NAME ${_cxxtest_testname}
-                 COMMAND ${CMAKE_COMMAND} -E chdir "${CMAKE_BINARY_DIR}/bin/Testing" 
+                 COMMAND ${CMAKE_COMMAND} -E chdir "${CMAKE_BINARY_DIR}/Testing" 
                          $<TARGET_FILE:${_cxxtest_testname}> )
 
     else (CXXTEST_SINGLE_LOGFILE)
@@ -150,11 +150,10 @@ macro(CXXTEST_ADD_TEST _cxxtest_testname)
         get_filename_component(_suitename ${part} NAME_WE )
         set( _cxxtest_separate_name "${_cxxtest_testname}_${_suitename}")
         add_test ( NAME ${_cxxtest_separate_name}
-                  COMMAND ${CMAKE_COMMAND} -E chdir "${CMAKE_BINARY_DIR}/bin/Testing" 
-		          $<TARGET_FILE:${_cxxtest_testname}> ${_suitename} )
+          COMMAND ${CMAKE_COMMAND} -E chdir "${CMAKE_BINARY_DIR}/Testing" 
+	  $<TARGET_FILE:${_cxxtest_testname}> ${_suitename} )
         set_tests_properties ( ${_cxxtest_separate_name} PROPERTIES
                                TIMEOUT ${TESTING_TIMEOUT} )
-
 		if (CXXTEST_ADD_PERFORMANCE)
 			# ------ Performance test version -------
 			# Name of the possibly-existing Performance test suite

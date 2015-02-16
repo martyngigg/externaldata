@@ -1,7 +1,17 @@
-# Emacs autosave
+# Do not add ExternalData module staging files
+.ExternalData*
+
+# back-up files
 *~
-.#*
+*.bak
+# vim swp files
+*.swp
+## Ignore files that are used for auto_completion with clang
+*.clang_complete
 
 # Python
 *.pyc
 *.pyo
+
+# back-up files when conflicts occur
+*.orig
