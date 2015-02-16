@@ -41,6 +41,7 @@ file( GLOB_RECURSE content_links
   RELATIVE "${EXTERNALDATATEST_SOURCE_DIR}" "Testing/Data/*.md5" )
 foreach(link ${content_links})
   string( REGEX REPLACE "\\.md5$" "" link ${link} )
+  message ( "Adding  file ${link}" )
   ExternalData_Expand_Arguments( TestingData
     link_location
     DATA{${link}}

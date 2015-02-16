@@ -32,4 +32,4 @@ list(APPEND ExternalData_URL_TEMPLATES
   )
 
 # Tell ExternalData commands not to transform raw files to content links.
-set(ExternalData_LINK_CONTENT MD5)
+#set(ExternalData_LINK_CONTENT MD5)
